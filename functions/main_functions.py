@@ -243,7 +243,9 @@ def run_maintenance(main_col_list, backlog_date, met_install_df, wo_tech_mnthly_
     maint_res_dict['external_maint_post_nsa_tech_needs_df'] = pd.concat(external_maint_post_nsa_tech_needs_list, axis=1)
 
     maint_res_dict['maint_dt_unconstrained_w_backlog'] = maint_dt_unconstrained_w_backlog
+    maint_res_dict['maint_dt_unconstrained'] = maint_dt_unconstrained
     maint_res_dict['maint_dt_unconstrained_v2'] = maint_dt_unconstrained_v2
+    maint_dt_unconstrained
     
 
     return maint_res_dict
