@@ -1,6 +1,6 @@
 
 import pandas as pd
-import basic_functions as bf
+import functions.basic_functions as bf
 import numpy as np
 
 def get_vendor_data(input_data):

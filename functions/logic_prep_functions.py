@@ -1,7 +1,7 @@
 import pandas as pd
 import math
-import input_file_functions as iff
-import basic_functions as bf
+import functions.input_file_functions as iff
+import functions.basic_functions as bf
 
 num_wks_in_month = 4.33
 
@@ -98,7 +98,10 @@ def get_install_unconstrained(main_col_list, sales_funnel_sla_df, sales_distb, i
     install_dt_unconstrained = install_dt_unconstrained_full.loc[:,main_col_list[0]:main_col_list[-1]]
     install_dt_unconstrained_w_backlog = pd.concat([install_backlog_ser, install_dt_unconstrained],  axis=1)
 
-    return install_backlog_ser, install_dt_unconstrained, install_dt_unconstrained_w_backlog
+    install_dt_unconstrained_v2 = install_dt_unconstrained.copy()
+    install_dt_unconstrained_v2['2024-08-01'] = install_dt_unconstrained_v2['2024-08-01'] + install_dt_unconstrained_w_backlog['2024-07-01']
+
+    return install_backlog_ser, install_dt_unconstrained, install_dt_unconstrained_w_backlog, install_dt_unconstrained_v2
 
 def get_maint_creation(monthly_inputs):
     maint_creation_df = monthly_inputs.loc['maint creation % of fleet',:]

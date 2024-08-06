@@ -2,10 +2,10 @@ import pandas as pd
 import math
 import numpy as np
 
-import basic_functions as bf
-import input_file_functions as iff
-import logic_functions as lf
-import logic_prep_functions as lpf
+import functions.basic_functions as bf
+import functions.input_file_functions as iff
+import functions.logic_functions as lf
+import functions.logic_prep_functions as lpf
 
 def run_install(main_col_list, install_backlog_ser, initial_local_tech_count, initial_travel_tech_count, install_dt_unconstrained, wo_tech_mnthly_rr_less_ss, 
                 max_local_tech_hires, local_tech_hires, dish_vendor_cohort_st, vendor_maint_budget_cap, vendor_install_budget_cap, install_perc_cap_input):
@@ -130,12 +130,10 @@ def run_install(main_col_list, install_backlog_ser, initial_local_tech_count, in
 
     return install_res_dict
 
-
-
 def run_maintenance(main_col_list, backlog_date, met_install_df, wo_tech_mnthly_rr_less_ss, qtrly_tech_cap, local_tech_supply, travel_tech_supply, external_tech_supply_df \
                     , dish_vendor_cohort_st, nsa_vendor_cohort_st, vendor_maint_budget_cap, vendor_install_budget_cap, live_fleet_df, maint_creation_df, winter_maint_mom):
     
-    intial_maint_dt_ser, maint_dt_unconstrained, _ = lf.get_maint_unconstrained(backlog_date, met_install_df, live_fleet_df, maint_creation_df, winter_maint_mom)
+    intial_maint_dt_ser, maint_dt_unconstrained, maint_dt_unconstrained_w_backlog, maint_dt_unconstrained_v2 = lf.get_maint_unconstrained(backlog_date, met_install_df, live_fleet_df, maint_creation_df, winter_maint_mom)
 
     remaining_maint_dt_ser_list = []
     as_maint_list = []
@@ -244,6 +242,10 @@ def run_maintenance(main_col_list, backlog_date, met_install_df, wo_tech_mnthly_
     maint_res_dict['external_maint_tech_needs_df'] = pd.concat(external_maint_tech_needs_list, axis=1)
     maint_res_dict['external_maint_post_nsa_tech_needs_df'] = pd.concat(external_maint_post_nsa_tech_needs_list, axis=1)
 
+    maint_res_dict['maint_dt_unconstrained_w_backlog'] = maint_dt_unconstrained_w_backlog
+    maint_res_dict['maint_dt_unconstrained_v2'] = maint_dt_unconstrained_v2
+    
+
     return maint_res_dict
 
 def get_main_st(input_data):
@@ -271,7 +273,7 @@ def run_model(input_data):
     sales_funnel_sla_df, new_sales_sla, sales_distb = iff.get_sales_data(input_data, st_df)
 
     main_col_list = bf.get_main_col_list(monthly_inputs)
-    install_backlog_ser, install_dt_unconstrained, install_dt_unconstrained_w_backlog= lpf.get_install_unconstrained(main_col_list, sales_funnel_sla_df, sales_distb, install_backlog_df, locs_in_implementation_df, st_df)
+    install_backlog_ser, install_dt_unconstrained, install_dt_unconstrained_w_backlog, install_dt_unconstrained_v2= lpf.get_install_unconstrained(main_col_list, sales_funnel_sla_df, sales_distb, install_backlog_df, locs_in_implementation_df, st_df)
     initial_local_tech_count, initial_travel_tech_count = iff.get_initial_tech_counts(input_data, st_df)
 
     wo_tech_mnthly_rr_less_ss = lpf.get_wo_tech_mnthly_rr_less_ss(flight_tech_df, monthly_inputs)
@@ -290,6 +292,7 @@ def run_model(input_data):
                             install_res_dict['external_tech_supply_df'], dish_vendor_cohort_st, nsa_vendor_cohort_st, vendor_maint_budget_cap, vendor_install_budget_cap, live_fleet_df, maint_creation_df, winter_maint_mom)
 
     install_res_dict['install_dt_unconstrained'] = install_dt_unconstrained
+    install_res_dict['install_dt_unconstrained_v2'] = install_dt_unconstrained_v2
     install_res_dict['install_dt_unconstrained_w_backlog'] = install_dt_unconstrained_w_backlog
 
     return install_res_dict, maint_res_dict, wo_tech_mnthly_rr_less_ss

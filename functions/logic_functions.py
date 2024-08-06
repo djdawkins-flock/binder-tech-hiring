@@ -2,10 +2,6 @@ import pandas as pd
 import numpy as np
 import math
 
-import basic_functions as bf
-import logic_prep_functions as lpf
-import input_file_functions as iff
-
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -288,8 +284,7 @@ def get_maint_unconstrained(backlog_date, met_install_df, live_fleet_df, maint_c
     
     maint_dt_unconstrained_w_backlog = pd.concat([intial_maint_dt_ser, maint_dt_unconstrained], axis=1)
 
-    maint_dt_unconstrained_ = maint_dt_unconstrained.copy()
-    maint_dt_unconstrained_['2024-08-01'] = maint_dt_unconstrained_['2024-08-01'] + maint_dt_unconstrained_w_backlog['2024-07-01']
-    maint_dt_unconstrained_.head()
+    maint_dt_unconstrained_v2 = maint_dt_unconstrained.copy()
+    maint_dt_unconstrained_v2['2024-08-01'] = maint_dt_unconstrained_v2['2024-08-01'] + maint_dt_unconstrained_w_backlog['2024-07-01']
 
-    return intial_maint_dt_ser, maint_dt_unconstrained, maint_dt_unconstrained_w_backlog
+    return intial_maint_dt_ser, maint_dt_unconstrained, maint_dt_unconstrained_w_backlog, maint_dt_unconstrained_v2
