@@ -1,2 +1,4 @@
 venv
 __pycache__/
+archieve/
+output/tech_hiring_model_output.xlsx
