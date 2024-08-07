@@ -102,7 +102,8 @@ def get_remaining_install_dt(remaining_install_dt_ser, current_month_local_tech_
     df_test.columns = ['remaining_install_dt', 'current_month_local_tech_supply', 'current_month_travel_tech_supply', 'current_month_install_dt']
 
     df_test['labor_supply'] = df_test['current_month_local_tech_supply'] + df_test['current_month_travel_tech_supply']
-    df_test['surplus_install_dt'] = df_test['remaining_install_dt'] - df_test['labor_supply'] + df_test['current_month_install_dt']
+    # df_test['surplus_install_dt'] = df_test['remaining_install_dt'] - df_test['labor_supply'] + df_test['current_month_install_dt']
+    df_test['surplus_install_dt'] = df_test['remaining_install_dt'] - df_test['labor_supply']
     df_test['surplus_install_dt'] = df_test['surplus_install_dt'].apply(lambda x: max(0,x))
 
     surplus_install_dt_ser = df_test['surplus_install_dt']
@@ -270,11 +271,11 @@ def get_maint_unconstrained(backlog_date, met_install_df, live_fleet_df, maint_c
     intial_maint_dt_ser.name = backlog_date       
 
     met_install_df.index.names = ['Service Territory']
-    rolling_maint_dt_unconstrained = live_fleet_df[['live_fleet_cnt']].merge(met_install_df, on='Service Territory', how='left').cumsum(axis=1).iloc[:,1:]
+    live_fleet_mom_df = live_fleet_df[['live_fleet_cnt']].merge(met_install_df, on='Service Territory', how='left').cumsum(axis=1).iloc[:,1:]
     maint_dt_unconstrained_list = []
 
     for idx, val in maint_creation_df.items():
-        ser = rolling_maint_dt_unconstrained[idx]*val
+        ser = live_fleet_mom_df[idx]*val
         ser = ser.apply(lambda x: math.ceil(x))
         maint_dt_unconstrained_list.append(ser)
         
@@ -287,4 +288,4 @@ def get_maint_unconstrained(backlog_date, met_install_df, live_fleet_df, maint_c
     maint_dt_unconstrained_v2 = maint_dt_unconstrained.copy()
     maint_dt_unconstrained_v2['2024-08-01'] = maint_dt_unconstrained_v2['2024-08-01'] + maint_dt_unconstrained_w_backlog['2024-07-01']
 
-    return intial_maint_dt_ser, maint_dt_unconstrained, maint_dt_unconstrained_w_backlog, maint_dt_unconstrained_v2
+    return intial_maint_dt_ser, maint_dt_unconstrained, maint_dt_unconstrained_w_backlog, maint_dt_unconstrained_v2, live_fleet_mom_df

@@ -12,7 +12,8 @@ def run_install(main_col_list, install_backlog_ser, initial_local_tech_count, in
 
     remaining_install_dt_ser_list = []
     tech_cap_by_st_ser_list = []
-    travel_tech_cap_by_st_ser_list = []
+    st_grounded_travel_tech_cnt_list = []
+    st_grounded_travel_tech_capacity_list = []
     local_tech_install_supply_list = []
     travel_tech_install_supply_list = []
     local_tech_hire_list = []
@@ -22,6 +23,7 @@ def run_install(main_col_list, install_backlog_ser, initial_local_tech_count, in
     external_tech_needs_list = []
     internal_tech_supply_list = []
     external_tech_supply_list = []
+    st_ttl_local_tech_capacity_list = []
 
     net_adds_list = [14, 16, 13, 13, 26, 28]
 
@@ -47,6 +49,8 @@ def run_install(main_col_list, install_backlog_ser, initial_local_tech_count, in
 
         current_month_install_dt_ser = install_dt_unconstrained.loc[:, dt_col] # only used in last call
 
+        remaining_install_dt_ser = remaining_install_dt_ser + current_month_install_dt_ser
+
         # Need to get new runrate every month
         monthly_tech_rr = wo_tech_mnthly_rr_less_ss.loc[dt_col]
 
@@ -70,6 +74,18 @@ def run_install(main_col_list, install_backlog_ser, initial_local_tech_count, in
 
         st_ttl_local_tech_cnt_ser.name = dt_col
         tech_cap_by_st_ser_list.append(st_ttl_local_tech_cnt_ser)
+
+        st_ttl_local_tech_capacity_ser = st_ttl_local_tech_cnt_ser * monthly_tech_rr
+        st_ttl_local_tech_capacity_ser.name = dt_col
+        st_ttl_local_tech_capacity_list.append(st_ttl_local_tech_capacity_ser)
+        
+        st_grounded_travel_tech_cnt_ser = st_grounded_travel_tech_cnt_ser['Travel tech count']
+        st_grounded_travel_tech_cnt_ser.name = dt_col
+        st_grounded_travel_tech_cnt_list.append(st_grounded_travel_tech_cnt_ser)
+
+        st_grounded_travel_tech_capacity = st_grounded_travel_tech_cnt_ser * monthly_tech_rr
+        st_grounded_travel_tech_capacity.name = dt_col
+        st_grounded_travel_tech_capacity_list.append(st_grounded_travel_tech_capacity)
 
         current_month_local_tech_supply_ser = lf.get_current_month_local_tech_supply(st_ttl_local_tech_cnt_ser, remaining_install_dt_ser, monthly_tech_rr, dt_col, install_perc_cap_input)
         local_tech_install_supply_list.append(current_month_local_tech_supply_ser) 
@@ -128,12 +144,16 @@ def run_install(main_col_list, install_backlog_ser, initial_local_tech_count, in
     install_res_dict['internal_tech_supply_df'] = pd.concat(internal_tech_supply_list, axis=1)
     install_res_dict['external_tech_supply_df'] = pd.concat(external_tech_supply_list, axis=1)
 
+    install_res_dict['st_grounded_travel_tech_cnt_df'] = pd.concat(st_grounded_travel_tech_cnt_list, axis=1)
+    install_res_dict['st_grounded_travel_tech_capacity_df'] = pd.concat(st_grounded_travel_tech_capacity_list, axis=1)
+    install_res_dict['st_ttl_local_tech_capacity_df'] = pd.concat(st_ttl_local_tech_capacity_list, axis=1)
+
     return install_res_dict
 
 def run_maintenance(main_col_list, backlog_date, met_install_df, wo_tech_mnthly_rr_less_ss, qtrly_tech_cap, local_tech_supply, travel_tech_supply, external_tech_supply_df \
                     , dish_vendor_cohort_st, nsa_vendor_cohort_st, vendor_maint_budget_cap, vendor_install_budget_cap, live_fleet_df, maint_creation_df, winter_maint_mom):
     
-    intial_maint_dt_ser, maint_dt_unconstrained, maint_dt_unconstrained_w_backlog, maint_dt_unconstrained_v2 = lf.get_maint_unconstrained(backlog_date, met_install_df, live_fleet_df, maint_creation_df, winter_maint_mom)
+    intial_maint_dt_ser, maint_dt_unconstrained, maint_dt_unconstrained_w_backlog, maint_dt_unconstrained_v2, live_fleet_mom_df = lf.get_maint_unconstrained(backlog_date, met_install_df, live_fleet_df, maint_creation_df, winter_maint_mom)
 
     remaining_maint_dt_ser_list = []
     as_maint_list = []
@@ -155,7 +175,7 @@ def run_maintenance(main_col_list, backlog_date, met_install_df, wo_tech_mnthly_
     for itr in range(0, len(main_col_list)):
         dt_col = main_col_list[itr]
 
-        remaining_maint_dt_ser = remaining_maint_dt_ser_list[itr]
+        remaining_maint_dt_ser = remaining_maint_dt_ser_list[itr] + maint_dt_unconstrained.iloc[:,itr]
 
         # Need to get new runrate every month
         monthly_tech_rr = wo_tech_mnthly_rr_less_ss.loc[dt_col]
@@ -216,7 +236,7 @@ def run_maintenance(main_col_list, backlog_date, met_install_df, wo_tech_mnthly_
         current_external_maint_tech_supply_ser = nsa_current_external_maint_tech_supply_ser + dish_current_external_maint_tech_supply_ser
         external_maint_tech_supply_list.append(current_external_maint_tech_supply_ser)
 
-        surplus_maint_dt_ser = remaining_maint_dt_ser - (current_month_internal_tech_supply_ser + current_external_maint_tech_supply_ser[dt_col]) + maint_dt_unconstrained.iloc[:,itr]
+        surplus_maint_dt_ser = remaining_maint_dt_ser - (current_month_internal_tech_supply_ser + current_external_maint_tech_supply_ser[dt_col])
         surplus_maint_dt_ser.rename(dt_col, inplace=True)
         remaining_maint_dt_ser_list.append(surplus_maint_dt_ser)    
 
@@ -245,8 +265,7 @@ def run_maintenance(main_col_list, backlog_date, met_install_df, wo_tech_mnthly_
     maint_res_dict['maint_dt_unconstrained_w_backlog'] = maint_dt_unconstrained_w_backlog
     maint_res_dict['maint_dt_unconstrained'] = maint_dt_unconstrained
     maint_res_dict['maint_dt_unconstrained_v2'] = maint_dt_unconstrained_v2
-    maint_dt_unconstrained
-    
+    maint_res_dict['live_fleet_mom_df'] = live_fleet_mom_df    
 
     return maint_res_dict
 
@@ -296,5 +315,12 @@ def run_model(input_data):
     install_res_dict['install_dt_unconstrained'] = install_dt_unconstrained
     install_res_dict['install_dt_unconstrained_v2'] = install_dt_unconstrained_v2
     install_res_dict['install_dt_unconstrained_w_backlog'] = install_dt_unconstrained_w_backlog
+
+    maint_res_dict['live_fleet_df'] = live_fleet_df
+    install_res_dict['initial_travel_tech_count'] = initial_travel_tech_count
+
+    # wo_tech_wkyl_rr = monthly_inputs[['WO / tech / week']]
+    install_res_dict['wo_tech_wkyl_rr'] = monthly_inputs
+
 
     return install_res_dict, maint_res_dict, wo_tech_mnthly_rr_less_ss
