@@ -8,7 +8,7 @@ import functions.logic_functions as lf
 import functions.logic_prep_functions as lpf
 
 def run_install(main_col_list, install_backlog_ser, initial_local_tech_count, initial_travel_tech_count, install_dt_unconstrained, wo_tech_mnthly_rr_less_ss, 
-                max_local_tech_hires, local_tech_hires, dish_vendor_cohort_st, vendor_maint_budget_cap, vendor_install_budget_cap, install_perc_cap_input):
+                max_local_tech_hires, local_tech_hires, dish_vendor_cohort_st, vendor_maint_budget_cap, vendor_install_budget_cap, install_perc_cap_input, percent_travel_allowed_df):
 
     remaining_install_dt_ser_list = []
     tech_cap_by_st_ser_list = []
@@ -67,7 +67,8 @@ def run_install(main_col_list, install_backlog_ser, initial_local_tech_count, in
 
             tech_hiring_itr += 1
 
-        st_grounded_travel_tech_cnt_ser = st_travel_tech_cnt_ser.astype(float).applymap(lambda x: math.ceil(x * .5))
+        perc_grounded_val = percent_travel_allowed_df[dt_col]
+        st_grounded_travel_tech_cnt_ser = st_travel_tech_cnt_ser.astype(float).applymap(lambda x: math.ceil(x * perc_grounded_val))
 
         st_ttl_local_tech_cnt_ser = tech_cnt_by_cap_ser_c['1P tech count'] + st_grounded_travel_tech_cnt_ser['Travel tech count']
         st_ttl_travel_tech_cnt_ser = st_travel_tech_cnt_ser['Travel tech count'] - st_grounded_travel_tech_cnt_ser['Travel tech count']
@@ -270,7 +271,7 @@ def run_maintenance(main_col_list, backlog_date, met_install_df, wo_tech_mnthly_
     return maint_res_dict
 
 def get_main_st(input_data):
-    vendor_cohort_st = pd.read_excel(input_data, sheet_name='vendor inputs', header=23, usecols="A:C")
+    vendor_cohort_st = pd.read_excel(input_data, sheet_name='vendor inputs', header=24, usecols="A:C")
     vendor_cohort_st = vendor_cohort_st.set_index('Service Territory')
     st_index = vendor_cohort_st.index
     st_df = pd.DataFrame(index=st_index)
@@ -301,12 +302,18 @@ def run_model(input_data):
     max_local_tech_hires, local_tech_hires = iff.get_local_tech_hires(input_data, st_df)
 
     vendor_capacity, nsa_vendor_cohort_st, dish_vendor_cohort_st = iff.get_vendor_data(input_data)
+
+    # print('vendor_capacity: ', vendor_capacity)
+    # print('nsa_vendor_cohort_st: ', nsa_vendor_cohort_st)
+    # print('dish_vendor_cohort_st: ', dish_vendor_cohort_st)
+
     vendor_install_budget_cap = bf.convert_date_idx_to_str(vendor_capacity.loc['3P install max (budget)'])
     vendor_maint_budget_cap = bf.convert_date_idx_to_str(vendor_capacity.loc['3P maint max (budget)'])
+    percent_travel_allowed_df= bf.convert_date_idx_to_str(vendor_capacity.loc['percent travel allowed'])
 
     install_res_dict = \
             run_install(main_col_list, install_backlog_ser, initial_local_tech_count, initial_travel_tech_count, install_dt_unconstrained, wo_tech_mnthly_rr_less_ss, 
-                max_local_tech_hires, local_tech_hires, dish_vendor_cohort_st, vendor_maint_budget_cap, vendor_install_budget_cap, install_perc_cap_input)
+                max_local_tech_hires, local_tech_hires, dish_vendor_cohort_st, vendor_maint_budget_cap, vendor_install_budget_cap, install_perc_cap_input, percent_travel_allowed_df)
     
     maint_res_dict = \
             run_maintenance(main_col_list, backlog_date, install_res_dict['met_install_df'], wo_tech_mnthly_rr_less_ss, install_res_dict['qtrly_tech_cap'], install_res_dict['local_tech_supply'], install_res_dict['travel_tech_supply'], \

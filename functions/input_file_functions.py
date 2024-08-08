@@ -4,10 +4,11 @@ import functions.basic_functions as bf
 import numpy as np
 
 def get_vendor_data(input_data):
-    vendor_capacity = pd.read_excel(input_data, sheet_name='vendor inputs',).iloc[:2, :]
+    vendor_capacity = pd.read_excel(input_data, sheet_name='vendor inputs',).iloc[:3, :]
     vendor_capacity = vendor_capacity.set_index('name')
-    vendor_cohort = pd.read_excel(input_data, sheet_name='vendor inputs', header=5, usecols="A:D").iloc[:12, :]
-    vendor_cohort_st = pd.read_excel(input_data, sheet_name='vendor inputs', header=23, usecols="A:C")
+    vendor_cohort = pd.read_excel(input_data, sheet_name='vendor inputs', header=6, usecols="A:D").iloc[:12, :]
+    
+    vendor_cohort_st = pd.read_excel(input_data, sheet_name='vendor inputs', header=24, usecols="A:C")
     vendor_cohort_st = vendor_cohort_st.set_index('Service Territory')
 
     nsa_df = vendor_cohort[vendor_cohort['vendor']=='NSA']
